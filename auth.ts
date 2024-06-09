@@ -1,10 +1,14 @@
-import NextAuth from 'next-auth';
+import NextAuth, { AuthError } from 'next-auth';
 import { authConfig } from './auth.config';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
 import { sql } from '@vercel/postgres';
 import type { User } from '@/app/lib/definitions';
 import bcrypt from 'bcrypt';
+
+export class CustomError extends AuthError {
+  code = "custom";
+}
 
 async function getUser(email: string): Promise<User | undefined> {
   try {
@@ -34,8 +38,7 @@ export const { auth, signIn, signOut } = NextAuth({
         if (passwordsMatch) return user;
       }
 
-      console.log('Invalid credentials');
-      return null;
+      throw new CustomError('Invalid Credentials')
     },
   })],
 });

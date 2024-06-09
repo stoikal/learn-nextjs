@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { AuthError } from 'next-auth';
 import { z } from 'zod';
 import { sql } from '@vercel/postgres';
-import { signIn } from '@/auth';
+import { signIn, CustomError } from '@/auth';
 
 export type State = {
   errors?: {
@@ -120,6 +120,16 @@ export async function authenticate(
   try {
     await signIn('credentials', formData);
   } catch (error) {
+
+    if (error instanceof CustomError) {
+      switch (error.code) {
+        case 'custom':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+
     if (error instanceof AuthError) {
       switch (error.type) {
         case 'CredentialsSignin':
@@ -128,6 +138,8 @@ export async function authenticate(
           return 'Something went wrong.';
       }
     }
+
+    
     throw error;
   }
 }
